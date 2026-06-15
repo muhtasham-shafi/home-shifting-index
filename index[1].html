@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Shifting Index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Oswald:wght@600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E7DCC6;--card:#FBF7EE;--card-edge:#D9CCB0;
+    --ink:#26221C;--ink-soft:#6A6051;--stamp:#B23A2E;--tape:#C9A24B;
+    --line:#CBBE9F;--good:#3F6B43;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:repeating-linear-gradient(135deg, rgba(0,0,0,.015) 0 2px, transparent 2px 9px),var(--paper);
+    color:var(--ink);
+    font-family:'Hind Siliguri','Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:600px;margin:0 auto;padding:0 16px 96px;}
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(var(--paper) 78%, rgba(231,220,198,0));padding:18px 0 10px;}
+  .brandrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
+  h1{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:clamp(22px,6vw,30px);line-height:1;margin:0;}
+  .ship{font-family:'Hind Siliguri',sans-serif;font-size:11px;font-weight:600;color:var(--ink-soft);white-space:nowrap;border:1.5px dashed var(--ink-soft);border-radius:4px;padding:4px 7px;transform:rotate(-2deg);}
+  .progress{margin-top:12px;}
+  .bar{height:10px;background:#d8ccae;border:1px solid var(--card-edge);border-radius:20px;overflow:hidden;}
+  .bar>span{display:block;height:100%;width:0;background:repeating-linear-gradient(45deg,var(--tape) 0 8px,#b88f3c 8px 16px);transition:width .4s ease;}
+  .meta{display:flex;justify-content:space-between;font-family:'Hind Siliguri',sans-serif;font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+  .controls{position:sticky;top:118px;z-index:15;padding:8px 0 10px;background:linear-gradient(var(--paper) 80%, rgba(231,220,198,0));}
+  .search{position:relative;}
+  .search input{width:100%;font-family:'Hind Siliguri',sans-serif;font-size:15px;color:var(--ink);padding:12px 14px 12px 40px;border:1.5px solid var(--card-edge);border-radius:10px;background:var(--card);outline:none;}
+  .search input:focus{border-color:var(--ink-soft);box-shadow:0 0 0 3px rgba(106,96,81,.15);}
+  .search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.55;}
+  .chips{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;}
+  .chip{font-family:'Hind Siliguri',sans-serif;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:20px;border:1.5px solid var(--card-edge);background:transparent;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .list{margin-top:4px;display:flex;flex-direction:column;gap:10px;}
+  .carton{position:relative;display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1.5px solid var(--card-edge);border-radius:10px;padding:12px 12px 12px 0;overflow:hidden;}
+  .carton::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--line);}
+  .carton.packed::before{background:var(--good);}
+  .numtab{flex:0 0 auto;width:54px;margin-left:14px;text-align:center;}
+  .num{font-family:'Roboto Mono',monospace;font-weight:700;font-size:26px;line-height:1;color:var(--ink);}
+  .numlabel{font-family:'Hind Siliguri',sans-serif;font-size:10px;color:var(--ink-soft);display:block;margin-top:4px;}
+  .body{flex:1 1 auto;min-width:0;}
+  textarea.contents{width:100%;border:none;background:transparent;resize:none;outline:none;font-family:'Hind Siliguri',sans-serif;font-size:15px;color:var(--ink);line-height:1.5;overflow:hidden;min-height:24px;}
+  textarea.contents::placeholder{color:#b3a888;}
+  .row2{display:flex;align-items:center;gap:8px;margin-top:8px;}
+  input.room{flex:1 1 auto;min-width:0;border:none;border-bottom:1px dashed var(--line);background:transparent;outline:none;font-family:'Hind Siliguri',sans-serif;font-size:12.5px;color:var(--ink-soft);padding:2px 0;}
+  input.room::placeholder{color:#bdb293;}
+  .packbtn{flex:0 0 auto;font-family:'Hind Siliguri',sans-serif;font-size:12px;font-weight:600;border:1.5px solid var(--card-edge);background:var(--card);color:var(--ink-soft);border-radius:6px;padding:6px 11px;cursor:pointer;white-space:nowrap;}
+  .carton.packed .packbtn{background:var(--good);border-color:var(--good);color:#fff;}
+  .stamp{position:absolute;right:-4px;top:9px;transform:rotate(9deg);font-family:'Hind Siliguri',sans-serif;font-weight:700;font-size:16px;color:var(--stamp);border:3px solid var(--stamp);border-radius:6px;padding:1px 8px;opacity:0;pointer-events:none;mix-blend-mode:multiply;}
+  .carton.packed .stamp{opacity:.78;}
+  .empty{display:none;text-align:center;color:var(--ink-soft);font-family:'Hind Siliguri',sans-serif;font-size:14px;padding:40px 10px;}
+  .empty.show{display:block;}
+  .toolbar{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--ink);}
+  .toolbar .inner{max-width:600px;margin:0 auto;display:flex;gap:8px;padding:10px 16px;}
+  .toolbar button{flex:1;font-family:'Hind Siliguri',sans-serif;font-size:13px;font-weight:600;background:transparent;color:var(--paper);border:1.5px solid rgba(231,220,198,.35);border-radius:8px;padding:10px;cursor:pointer;}
+  .toolbar button:active{background:rgba(255,255,255,.08);}
+  .loading{text-align:center;padding:50px;font-family:'Hind Siliguri',sans-serif;color:var(--ink-soft);}
+  .toast{position:fixed;left:50%;bottom:74px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);font-family:'Hind Siliguri',sans-serif;font-size:13px;padding:9px 16px;border-radius:8px;opacity:0;transition:.25s;pointer-events:none;z-index:30;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brandrow">
+      <h1>Home Shifting Index</h1>
+      <div class="ship">ভঙ্গুর · এই দিক উপরে</div>
+    </div>
+    <div class="progress">
+      <div class="bar"><span id="barfill"></span></div>
+      <div class="meta"><span id="packedcount">০ প্যাক হয়েছে</span><span id="logcount">০ লেখা হয়েছে</span></div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="search" type="text" placeholder="জিনিস খুঁজুন — যেমন চার্জার, শীতের কাপড়" autocomplete="off">
+    </div>
+    <div class="chips">
+      <button class="chip on" data-f="all">সব</button>
+      <button class="chip" data-f="logged">জিনিস আছে</button>
+      <button class="chip" data-f="topack">প্যাক বাকি</button>
+      <button class="chip" data-f="packed">প্যাক হয়েছে</button>
+    </div>
+  </div>
+
+  <div id="loading" class="loading">আপনার তালিকা লোড হচ্ছে…</div>
+  <div id="list" class="list"></div>
+  <div id="empty" class="empty"></div>
+</div>
+
+<div class="toolbar"><div class="inner">
+  <button id="addBtn">+ কার্টন যোগ</button>
+  <button id="printBtn">তালিকা প্রিন্ট</button>
+  <button id="exportBtn">ব্যাকআপ</button>
+</div></div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY='hsi:data:v1';
+let state={count:100,cartons:{}};
+let filter='all', query='', mem=false;
+const $=s=>document.querySelector(s);
+const listEl=$('#list'), emptyEl=$('#empty');
+
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1600);}
+
+function load(){
+  try{const v=localStorage.getItem(KEY);if(v){state=JSON.parse(v);}}
+  catch(e){}
+  if(!state.cartons)state.cartons={};
+  if(!state.count)state.count=100;
+  $('#loading').style.display='none';
+  render();
+}
+let saveTimer;
+function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){toast('সেভ করা যায়নি');}},250);}
+
+function get(n){return state.cartons[n]||{c:'',r:'',p:false};}
+function setField(n,k,v){const c=get(n);c[k]=v;state.cartons[n]=c;updateProgress();save();}
+
+function matches(n){
+  const c=get(n);
+  if(query){const q=query.toLowerCase();if(!((c.c||'').toLowerCase().includes(q)||(c.r||'').toLowerCase().includes(q)||String(n)===q))return false;}
+  if(filter==='logged')return !!(c.c&&c.c.trim());
+  if(filter==='packed')return !!c.p;
+  if(filter==='topack')return !c.p;
+  return true;
+}
+function autosize(t){t.style.height='auto';t.style.height=t.scrollHeight+'px';}
+
+function render(){
+  listEl.innerHTML='';let shown=0;
+  for(let n=1;n<=state.count;n++){
+    if(!matches(n))continue;shown++;
+    const c=get(n);
+    const card=document.createElement('div');
+    card.className='carton'+(c.p?' packed':'');
+    card.innerHTML=`
+      <div class="numtab"><span class="num">${n}</span><span class="numlabel">কার্টন</span></div>
+      <div class="body">
+        <textarea class="contents" placeholder="ভিতরে কী আছে? যেমন কাপড়, বই, চার্জার">${(c.c||'').replace(/</g,'&lt;')}</textarea>
+        <div class="row2">
+          <input class="room" placeholder="ঘর / কোথায় যাবে" value="${(c.r||'').replace(/"/g,'&quot;')}">
+          <button class="packbtn">${c.p?'প্যাক হয়েছে ✓':'প্যাক করুন'}</button>
+        </div>
+      </div>
+      <div class="stamp">প্যাকড</div>`;
+    const ta=card.querySelector('.contents');autosize(ta);
+    ta.addEventListener('input',()=>{autosize(ta);setField(n,'c',ta.value);});
+    card.querySelector('.room').addEventListener('input',e=>setField(n,'r',e.target.value));
+    card.querySelector('.packbtn').addEventListener('click',()=>{setField(n,'p',!get(n).p);render();});
+    listEl.appendChild(card);
+  }
+  emptyEl.className='empty'+(shown===0?' show':'');
+  emptyEl.textContent=query?`“${query}” এর সাথে কোনো কার্টন মেলেনি।`:'এখনো কিছু নেই — প্রতিটি বাক্সে কী আছে লিখতে শুরু করুন।';
+  updateProgress();
+}
+
+function updateProgress(){
+  let packed=0,logged=0;
+  for(let n=1;n<=state.count;n++){const c=get(n);if(c.p)packed++;if(c.c&&c.c.trim())logged++;}
+  $('#barfill').style.width=(state.count?packed/state.count*100:0)+'%';
+  $('#packedcount').textContent=`${state.count} টির মধ্যে ${packed} প্যাক হয়েছে`;
+  $('#logcount').textContent=`${logged} টি লেখা হয়েছে`;
+}
+
+$('#search').addEventListener('input',e=>{query=e.target.value.trim();render();});
+document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));ch.classList.add('on');filter=ch.dataset.f;render();}));
+$('#addBtn').addEventListener('click',()=>{state.count++;save();render();toast('কার্টন '+state.count+' যোগ হয়েছে');window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});});
+$('#exportBtn').addEventListener('click',()=>{
+  let txt='HOME SHIFTING INDEX\n\n';
+  for(let n=1;n<=state.count;n++){const c=get(n);txt+=`${n}. ${c.c||'—'}${c.r?'  ('+c.r+')':''}${c.p?'  [প্যাকড]':''}\n`;}
+  const blob=new Blob([txt],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='home-shifting-index.txt';a.click();toast('ব্যাকআপ ডাউনলোড হয়েছে');
+});
+$('#printBtn').addEventListener('click',()=>window.print());
+load();
+</script>
+</body>
+</html>
