@@ -7,22 +7,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Oswald:wght@600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
-  :root{
-    --paper:#E7DCC6;--card:#FBF7EE;--card-edge:#D9CCB0;
-    --ink:#26221C;--ink-soft:#6A6051;--stamp:#B23A2E;--tape:#C9A24B;
-    --line:#CBBE9F;--good:#3F6B43;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:repeating-linear-gradient(135deg, rgba(0,0,0,.015) 0 2px, transparent 2px 9px),var(--paper);
-    color:var(--ink);
-    font-family:'Hind Siliguri','Inter',system-ui,sans-serif;
-    -webkit-font-smoothing:antialiased;
-  }
+  :root{--paper:#E7DCC6;--card:#FBF7EE;--card-edge:#D9CCB0;--ink:#26221C;--ink-soft:#6A6051;--stamp:#B23A2E;--tape:#C9A24B;--line:#CBBE9F;--good:#3F6B43;}
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:repeating-linear-gradient(135deg, rgba(0,0,0,.015) 0 2px, transparent 2px 9px),var(--paper);color:var(--ink);font-family:'Hind Siliguri','Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
   .wrap{max-width:600px;margin:0 auto;padding:0 16px 96px;}
-  header{position:sticky;top:0;z-index:20;background:linear-gradient(var(--paper) 78%, rgba(231,220,198,0));padding:18px 0 10px;}
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(var(--paper) 80%, rgba(231,220,198,0));padding:18px 0 10px;}
   .brandrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
   h1{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:clamp(22px,6vw,30px);line-height:1;margin:0;}
   .ship{font-family:'Hind Siliguri',sans-serif;font-size:11px;font-weight:600;color:var(--ink-soft);white-space:nowrap;border:1.5px dashed var(--ink-soft);border-radius:4px;padding:4px 7px;transform:rotate(-2deg);}
@@ -30,7 +21,11 @@
   .bar{height:10px;background:#d8ccae;border:1px solid var(--card-edge);border-radius:20px;overflow:hidden;}
   .bar>span{display:block;height:100%;width:0;background:repeating-linear-gradient(45deg,var(--tape) 0 8px,#b88f3c 8px 16px);transition:width .4s ease;}
   .meta{display:flex;justify-content:space-between;font-family:'Hind Siliguri',sans-serif;font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
-  .controls{position:sticky;top:118px;z-index:15;padding:8px 0 10px;background:linear-gradient(var(--paper) 80%, rgba(231,220,198,0));}
+  .sync{display:flex;align-items:center;gap:7px;font-family:'Hind Siliguri',sans-serif;font-size:11.5px;color:var(--ink-soft);margin-top:6px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:#b9a;flex:0 0 auto;}
+  .dot.ok{background:var(--good);} .dot.off{background:var(--tape);} .dot.err{background:var(--stamp);}
+  .linkbtn{background:none;border:none;color:var(--ink);text-decoration:underline;font-family:inherit;font-size:11.5px;cursor:pointer;padding:0;margin-left:auto;}
+  .controls{position:sticky;top:150px;z-index:15;padding:8px 0 10px;background:linear-gradient(var(--paper) 80%, rgba(231,220,198,0));}
   .search{position:relative;}
   .search input{width:100%;font-family:'Hind Siliguri',sans-serif;font-size:15px;color:var(--ink);padding:12px 14px 12px 40px;border:1.5px solid var(--card-edge);border-radius:10px;background:var(--card);outline:none;}
   .search input:focus{border-color:var(--ink-soft);box-shadow:0 0 0 3px rgba(106,96,81,.15);}
@@ -77,6 +72,7 @@
     <div class="progress">
       <div class="bar"><span id="barfill"></span></div>
       <div class="meta"><span id="packedcount">০ প্যাক হয়েছে</span><span id="logcount">০ লেখা হয়েছে</span></div>
+      <div class="sync"><span class="dot" id="syncdot"></span><span id="syncstate">সংযোগ হচ্ছে…</span></div>
     </div>
   </header>
 
@@ -99,36 +95,91 @@
 </div>
 
 <div class="toolbar"><div class="inner">
-  <button id="addBtn">+ কার্টন যোগ</button>
-  <button id="printBtn">তালিকা প্রিন্ট</button>
-  <button id="exportBtn">ব্যাকআপ</button>
+  <button id="addBtn">+ প্যাকেজ</button>
+  <button id="printBtn">প্রিন্ট</button>
 </div></div>
 
 <div id="toast" class="toast"></div>
 
 <script>
-const KEY='hsi:data:v1';
+/* ====== SUPABASE CONFIG — replace these two with your own (see README) ====== */
+const SUPABASE_URL  = "https://qoqvaiochvjpvdkrqjkg.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_0GBWeMMbvmkEjGEIst0eXA_f8qukP9o";
+// every device that opens this link uses this same code, so they all share one list:
+const SYNC_CODE = "hsi-bd-7f3k92";
+/* =========================================================================== */
+
+const LKEY='hsi:data:v1';
+const cloudReady = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("YOUR-PROJECT")
+                && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes("YOUR-ANON")
+                && typeof window.supabase!=='undefined';
+let sb = cloudReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+const code = SYNC_CODE;
+
 let state={count:100,cartons:{}};
-let filter='all', query='', mem=false;
+let filter='all', query='', pendingRemote=null;
 const $=s=>document.querySelector(s);
 const listEl=$('#list'), emptyEl=$('#empty');
 
-function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1600);}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1700);}
+function setSync(cls,txt){$('#syncdot').className='dot '+cls;$('#syncstate').textContent=txt;}
 
-function load(){
-  try{const v=localStorage.getItem(KEY);if(v){state=JSON.parse(v);}}
-  catch(e){}
+async function load(){
+  let needSeed=false;
+  if(cloudReady){
+    try{
+      const {data,error}=await sb.from('shifting').select('data').eq('id',code).maybeSingle();
+      if(error)throw error;
+      if(data&&data.data)state=data.data;
+      else { const v=localStorage.getItem(LKEY); if(v){state=JSON.parse(v);needSeed=true;} }
+      setSync('ok','ক্লাউড সিংক চালু — সব ডিভাইসে একই তালিকা');
+      subscribe();
+    }catch(e){
+      setSync('err','ক্লাউডে সংযোগ ব্যর্থ — লোকাল মোড');
+      try{const v=localStorage.getItem(LKEY);if(v)state=JSON.parse(v);}catch(_){}
+    }
+  }else{
+    setSync('off','লোকাল মোড — সেটআপ বাকি (README দেখুন)');
+    try{const v=localStorage.getItem(LKEY);if(v)state=JSON.parse(v);}catch(e){}
+  }
   if(!state.cartons)state.cartons={};
   if(!state.count)state.count=100;
   $('#loading').style.display='none';
+  if(needSeed)save();
   render();
 }
+
 let saveTimer;
-function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){toast('সেভ করা যায়নি');}},250);}
+function save(){
+  try{localStorage.setItem(LKEY,JSON.stringify(state));}catch(e){}
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    if(!cloudReady||!sb)return;
+    try{
+      const {error}=await sb.from('shifting').upsert({id:code,data:state,updated_at:new Date().toISOString()});
+      if(error)throw error;
+    }catch(e){ setSync('err','ক্লাউডে সেভ হয়নি — লোকালে রাখা আছে'); }
+  },350);
+}
+
+function subscribe(){
+  sb.channel('hsi-'+code)
+    .on('postgres_changes',{event:'*',schema:'public',table:'shifting',filter:'id=eq.'+code},
+      p=>{ const nd=p.new&&p.new.data; if(nd)applyRemote(nd); })
+    .subscribe();
+}
+function applyRemote(d){
+  if(JSON.stringify(d)===JSON.stringify(state))return;
+  const ae=document.activeElement;
+  if(ae&&(ae.tagName==='TEXTAREA'||ae.tagName==='INPUT')){pendingRemote=d;return;}
+  state=d; render(); toast('অন্য ডিভাইস থেকে আপডেট হয়েছে');
+}
+document.addEventListener('focusout',()=>{ if(pendingRemote){const d=pendingRemote;pendingRemote=null;state=d;render();toast('আপডেট হয়েছে');}});
 
 function get(n){return state.cartons[n]||{c:'',r:'',p:false};}
 function setField(n,k,v){const c=get(n);c[k]=v;state.cartons[n]=c;updateProgress();save();}
-function removeCarton(){if(state.count<=1)return;const c=get(state.count);if((c.c&&c.c.trim())||c.p){if(!confirm('কার্টন '+state.count+' এ তথ্য আছে। সত্যিই মুছে ফেলবেন?'))return;}delete state.cartons[state.count];state.count--;save();render();toast('শেষ কার্টন মুছে ফেলা হয়েছে');}
+function removeCarton(){if(state.count<=1)return;const c=get(state.count);if((c.c&&c.c.trim())||c.p){if(!confirm('প্যাকেজ '+state.count+' এ তথ্য আছে। সত্যিই মুছে ফেলবেন?'))return;}delete state.cartons[state.count];state.count--;save();render();toast('শেষ প্যাকেজ মুছে ফেলা হয়েছে');}
 
 function matches(n){
   const c=get(n);
@@ -148,7 +199,7 @@ function render(){
     const card=document.createElement('div');
     card.className='carton'+(c.p?' packed':'');
     card.innerHTML=`
-      <div class="numtab"><span class="num">${n}</span><span class="numlabel">কার্টন</span>${n===state.count?'<button class="rmbtn" title="শেষ কার্টন মুছুন">✕ মুছুন</button>':''}</div>
+      <div class="numtab"><span class="num">${n}</span><span class="numlabel">প্যাকেজ</span>${n===state.count?'<button class="rmbtn" title="শেষ প্যাকেজ মুছুন">✕ মুছুন</button>':''}</div>
       <div class="body">
         <textarea class="contents" placeholder="ভিতরে কী আছে? যেমন কাপড়, বই, চার্জার">${(c.c||'').replace(/</g,'&lt;')}</textarea>
         <div class="row2">
@@ -165,7 +216,7 @@ function render(){
     listEl.appendChild(card);
   }
   emptyEl.className='empty'+(shown===0?' show':'');
-  emptyEl.textContent=query?`“${query}” এর সাথে কোনো কার্টন মেলেনি।`:'এখনো কিছু নেই — প্রতিটি বাক্সে কী আছে লিখতে শুরু করুন।';
+  emptyEl.textContent=query?`“${query}” এর সাথে কোনো প্যাকেজ মেলেনি।`:'এখনো কিছু নেই — প্রতিটি বাক্সে কী আছে লিখতে শুরু করুন।';
   updateProgress();
 }
 
@@ -179,13 +230,9 @@ function updateProgress(){
 
 $('#search').addEventListener('input',e=>{query=e.target.value.trim();render();});
 document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));ch.classList.add('on');filter=ch.dataset.f;render();}));
-$('#addBtn').addEventListener('click',()=>{state.count++;save();render();toast('কার্টন '+state.count+' যোগ হয়েছে');window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});});
-$('#exportBtn').addEventListener('click',()=>{
-  let txt='HOME SHIFTING INDEX\n\n';
-  for(let n=1;n<=state.count;n++){const c=get(n);txt+=`${n}. ${c.c||'—'}${c.r?'  ('+c.r+')':''}${c.p?'  [প্যাকড]':''}\n`;}
-  const blob=new Blob([txt],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='home-shifting-index.txt';a.click();toast('ব্যাকআপ ডাউনলোড হয়েছে');
-});
+$('#addBtn').addEventListener('click',()=>{state.count++;save();render();toast('প্যাকেজ '+state.count+' যোগ হয়েছে');window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});});
 $('#printBtn').addEventListener('click',()=>window.print());
+
 load();
 </script>
 </body>
