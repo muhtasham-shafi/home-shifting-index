@@ -53,6 +53,7 @@
   input.room::placeholder{color:#bdb293;}
   .packbtn{flex:0 0 auto;font-family:'Hind Siliguri',sans-serif;font-size:12px;font-weight:600;border:1.5px solid var(--card-edge);background:var(--card);color:var(--ink-soft);border-radius:6px;padding:6px 11px;cursor:pointer;white-space:nowrap;}
   .carton.packed .packbtn{background:var(--good);border-color:var(--good);color:#fff;}
+  .rmbtn{display:block;margin:6px auto 0;font-family:'Hind Siliguri',sans-serif;font-size:10px;color:var(--stamp);background:transparent;border:1px solid var(--stamp);border-radius:5px;padding:2px 6px;cursor:pointer;opacity:.85;}
   .stamp{position:absolute;right:-4px;top:9px;transform:rotate(9deg);font-family:'Hind Siliguri',sans-serif;font-weight:700;font-size:16px;color:var(--stamp);border:3px solid var(--stamp);border-radius:6px;padding:1px 8px;opacity:0;pointer-events:none;mix-blend-mode:multiply;}
   .carton.packed .stamp{opacity:.78;}
   .empty{display:none;text-align:center;color:var(--ink-soft);font-family:'Hind Siliguri',sans-serif;font-size:14px;padding:40px 10px;}
@@ -127,6 +128,7 @@ function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStora
 
 function get(n){return state.cartons[n]||{c:'',r:'',p:false};}
 function setField(n,k,v){const c=get(n);c[k]=v;state.cartons[n]=c;updateProgress();save();}
+function removeCarton(){if(state.count<=1)return;const c=get(state.count);if((c.c&&c.c.trim())||c.p){if(!confirm('কার্টন '+state.count+' এ তথ্য আছে। সত্যিই মুছে ফেলবেন?'))return;}delete state.cartons[state.count];state.count--;save();render();toast('শেষ কার্টন মুছে ফেলা হয়েছে');}
 
 function matches(n){
   const c=get(n);
@@ -146,7 +148,7 @@ function render(){
     const card=document.createElement('div');
     card.className='carton'+(c.p?' packed':'');
     card.innerHTML=`
-      <div class="numtab"><span class="num">${n}</span><span class="numlabel">কার্টন</span></div>
+      <div class="numtab"><span class="num">${n}</span><span class="numlabel">কার্টন</span>${n===state.count?'<button class="rmbtn" title="শেষ কার্টন মুছুন">✕ মুছুন</button>':''}</div>
       <div class="body">
         <textarea class="contents" placeholder="ভিতরে কী আছে? যেমন কাপড়, বই, চার্জার">${(c.c||'').replace(/</g,'&lt;')}</textarea>
         <div class="row2">
@@ -159,6 +161,7 @@ function render(){
     ta.addEventListener('input',()=>{autosize(ta);setField(n,'c',ta.value);});
     card.querySelector('.room').addEventListener('input',e=>setField(n,'r',e.target.value));
     card.querySelector('.packbtn').addEventListener('click',()=>{setField(n,'p',!get(n).p);render();});
+    const rb=card.querySelector('.rmbtn');if(rb)rb.addEventListener('click',removeCarton);
     listEl.appendChild(card);
   }
   emptyEl.className='empty'+(shown===0?' show':'');
